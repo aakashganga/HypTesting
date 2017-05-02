@@ -1,0 +1,99 @@
+---
+title: "AB Testing"
+output: html_notebook
+---
+
+```{r setup}
+library(knitr)
+knitr::opts_chunk$set(root.dir = 'C:/Users/amit.dingare/Documents/Rapid Eagle/Hypothesis Testing/')
+```
+
+
+
+### 1.6 Hypothesis Testing
+The null hypothesis states that the difference between the control and experiment is due to chance. 
+If pcont and ptest are the control and test probabilities, then according to the null hypothesis
+H0:pexp???pcont=0
+
+The alternate hypothesis is that
+H1:pexp???pcont???0
+
+
+Example
+
+# Control Group:
+# 974 clicks with 10,072 page views
+
+# test group:
+# 1242 clicks with 9886 page views
+
+# Success criteria = minimum 2 % change in click through rate
+
+# Question: Can we launch the experimental change?
+
+Approach 1: Assume simple random sampling
+#![Here is a defintion](pooled.png)
+
+```{r}
+Ncont = 10072
+Xcont = 974
+
+Nexp = 9886
+Xexp = 1242
+
+Ppool = (Xcont+Xexp)/(Ncont+Nexp)
+ 
+SEpool = sqrt(Ppool*(1-Ppool)*(1/Ncont + 1/Nexp))
+
+
+Pexp = Xexp/Nexp
+
+Pcont = Xcont/Ncont
+
+dhat = Pexp - Pcont
+
+dhat
+```
+
+Now calculate Confidence Interval around dhat
+
+
+```{r}
+# Formula for CI = zVal*sqrt(p*(1-p)/n)
+
+alpha=0.05
+ci = 1-alpha
+
+zVal <- round(qnorm(1 - (1 - ci)/2), 4) # divided by 2 for 2-sided test
+
+(zVal)
+
+int = zVal*SEpool
+
+
+# Thus confidence interval is 
+c(dhat-int, dhat+int)
+```
+
+Given that the confidence interval doesn't contain zero and lower bound of CI > 2%, we can definitely launch the change.
+
+
+Approach 2: Apply a proportion test
+
+2-sample test for equality of proportions with continuity correction (z-test)
+
+```{r}
+prop.test(c(1242,974),c(9886,10072),correct=FALSE)
+```
+
+
+Approach 3: Apply non-parametric test (chi-sq test)
+```{r}
+M <- as.table(rbind(c(974, 10072), c(1242, 9886)))
+dimnames(M) <- list(group = c("Control", "Experiment"),
+                    Measure = c("Clicks","Impressions"))
+(Xsq <- chisq.test(M,correct = FALSE))  # Prints test summary
+```
+
+
+
